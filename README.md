@@ -11,7 +11,7 @@ atto wallet:
 - atto binary : https://github.com/codesoap/atto
 - PHP Library bcmath : apt install php-bcmath
 - PHP 7.4 (Tested on PHP 7.4, may work on other versions)
-
+- Tested on Linux
 ------------
 
 **Initiate attoPHP class and specify binary:**
