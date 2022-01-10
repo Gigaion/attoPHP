@@ -63,3 +63,11 @@ Convert nano to raw (string):
 Convert raw to nano (string):
 
 `$attoPHP->raw_to_nano(AMOUNT)`
+
+------------
+
+Please note we are not a cryptographer. 
+
+If you find any bugs we recommend putting in a pull request. 
+
+Any additional updates and features are always welcome from the open source community to improve this project.
