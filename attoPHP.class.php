@@ -41,7 +41,7 @@
 		private int $account = 0; //Default account index 0
 		public bool $debug = false;
 		private string $attoBinary = 'atto';
-		public string $debugLogFile = 'atto-debug.log';
+		private string $debugLogFile = 'atto-debug.log';
 		
 		//================================================
 		//==============General Utilities=================
