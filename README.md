@@ -12,6 +12,13 @@ atto wallet:
 - PHP Library bcmath : apt install php-bcmath
 - PHP 7.4 (Tested on PHP 7.4, may work on other versions)
 - Tested on Linux
+
+### Note
+attoPHP uses shell_exec() to call the atto binary!
+
+Even with our existing validation and sanitation methods, for best practice extreme caution should be used when providing function parameters to this class.
+With proper care this class can be used succesfully, although audits, modifications, and testing may be necessary before using this in a production setting.
+
 ------------
 
 **Initiate attoPHP class and specify binary:**
