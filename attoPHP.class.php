@@ -38,6 +38,8 @@
 	class attoPHP {
 		
 		private string $seed = '';
+		private string $seedFile = '';
+		private string $seedFileChecksum = '';
 		private int $account = 0; //Default account index 0
 		public bool $debug = false;
 		private string $attoBinary = 'atto';
@@ -203,8 +205,22 @@
 		private function execute(string $command) {
 			if($command != '') {
 				if($this->seed != '') {
-					$results = shell_exec('echo "'.$this->seed.'" | '.$this->attoBinary.' '.trim($command).' 2>&1');
-					$this->trace("[Command]: ".trim($command)." [Results]: ".json_encode($results));
+					if($this->seedFile != '') {
+						if($this->check_seed_file_integrity()) {
+							$attoCommand = 'cat "'.$this->seedFile.'" | paste | "'.$this->attoBinary.'" ';
+							$results = shell_exec($attoCommand.trim($command).' 2>&1');
+						}
+						else {
+							$this->error('Seed file intgrity error, file checksum changed! For your safety, please specify seed again.');
+							return false;
+						}
+					}
+					else {
+						$attoCommand = 'echo "'.$this->seed.'" | "'.$this->attoBinary.'" ';
+						$results = shell_exec($attoCommand.trim($command).' 2>&1');
+					}
+					
+					$this->trace("[Command]: ".$attoCommand.trim($command)." [Results]: ".json_encode($results));
 					
 					$validateResults = $this->is_valid_results($results);
 					if($validateResults->validBool) {
@@ -229,7 +245,7 @@
 		//Execute atto commands without seed specified
 		private function execute_plain(string $command) {
 			if($command != '') {
-				$results = shell_exec($this->attoBinary.' '.trim($command));
+				$results = shell_exec('"'.$this->attoBinary.'" '.trim($command).' 2>&1');
 				$validateResults = $this->is_valid_results($results);
 				if($validateResults->validBool) {
 					return trim($results);
@@ -309,9 +325,21 @@
 
 		//Set seed (64 character hex)
 		public function set_seed(string $seed, bool $localFile = false) {
+			//Clear existing seed, so if provided seed is false it does not try to use old seed.
+			$this->seed = '';
+			$this->seedFile = '';
+			$this->seedFileChecksum = '';
 			
+			$seedFile = '';
 			if($localFile) {
-				$seed = file_get_contents($seed, true);
+				if(file_exists($seed)) {
+					$seedFile = $seed;
+					$seedFileChecksum = md5_file($seedFile);
+					$seed = file_get_contents($seed, true);
+					
+					//Optionally uncomment this, if you prefer attoPHP to use echo seed, instead of cat seedFile.
+					//$localFile = false;
+				}
 			}
 			
 			$seed = strtoupper(trim($seed));
@@ -319,13 +347,41 @@
 			if(ctype_alnum($seed)) {
 				if(strlen($seed) == 64) {
 					if(ctype_xdigit($seed)) {
-						$this->seed = $seed;
-						return true;
+						if($localFile) {
+							if($seedFileChecksum != '') {
+								$this->seed = $seed;
+								$this->seedFile = $seedFile;
+								$this->seedFileChecksum = $seedFileChecksum;
+								return true;
+							}
+							else {
+								$this->error('Unable to determine seed file checksum.');
+								return false;
+							}
+						}
+						else {
+							$this->seed = $seed;
+							return true;
+						}
 					}
 				}
 			}
 			
 			$this->error('Invalid seed provided. Seed must be 64 hex characters.');
+			return false;
+		}
+		
+		//Verify that seed file specified has not changed
+		private function check_seed_file_integrity() {
+			if($this->seedFile != '') {
+				$seedFile = $this->seedFile;
+				if(file_exists($seedFile)) {
+					$seedFileChecksum = md5_file($seedFile);
+					if($this->seedFileChecksum == $seedFileChecksum) {
+						return true;
+					}
+				}
+			}
 			return false;
 		}
 		
